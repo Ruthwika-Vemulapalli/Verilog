@@ -1,0 +1,126 @@
+//DESIGN MODULE//
+module JK_FF_Sync_Active_High_Set_Reset(
+    input wire clk,    // Clock input
+    input wire reset,  // Synchronous active-high reset
+    input wire set,    // Synchronous active-high set
+    input wire J,      // J input
+    input wire K,      // K input
+    output reg Q       // Output Q
+);
+
+always @(posedge clk) begin
+    if (reset) begin
+        Q <= 0;  // Reset Q to 0 on active-high reset
+    end else if (set) begin
+        Q <= 1;  // Set Q to 1 on active-high set
+    end else begin
+        // Update Q based on J and K inputs
+        if (J && ~K) begin
+            Q <= 1;  // Set Q to 1 if J is high and K is low
+        end else if (~J && K) begin
+            Q <= 0;  // Reset Q to 0 if J is low and K is high
+        end else if (J && K) begin
+            Q <= ~Q; // Toggle Q if both J and K are high
+        end
+      else begin
+        Q<=Q;
+      end
+        // If J and K are both low, Q remains unchanged
+    end
+end
+
+endmodule 
+
+//TESTBENCH//
+`timescale 1ns / 1ps  // Specify the time scale for the simulation
+
+module tb_JK_FF_Sync_Active_High_Set_Reset;
+    reg clk;          // Clock signal
+    reg reset;        // Synchronous active-high reset
+    reg set;          // Synchronous active-high set
+    reg J;            // J input
+    reg K;            // K input
+    wire Q;           // Output Q
+
+    // Instantiate the JK Flip-Flop
+    JK_FF_Sync_Active_High_Set_Reset uut (
+        .clk(clk),
+        .reset(reset),
+        .set(set),
+        .J(J),
+        .K(K),
+        .Q(Q)
+    );
+
+    // Clock generation
+    initial begin
+        clk = 0; // Initialize clock
+        forever #5 clk = ~clk; // Toggle clock every 5 time units (10ns clock period)
+    end
+
+    initial begin
+        // Initialize signals
+        reset = 0; 
+        set = 0; 
+        J = 0; 
+        K = 0; 
+      // Set up VCD dumping
+        $dumpfile("dump.vcd");
+      $dumpvars(0, tb_JK_FF_Sync_Active_High_Set_Reset);
+        
+        // Test Cases
+        // Test 1: Activate reset
+        #10 reset = 1;
+        #10 reset = 0;
+
+        // Test 2: Activate set
+        #10 set = 1;
+        #10 set = 0;
+
+        // Test 3: Apply J = 1, K = 0 (Set Q)
+        #10 J = 1; K = 0;
+        #10 J = 0; K = 0;
+
+        // Test 4: Apply J = 0, K = 1 (Reset Q)
+        #10 J = 0; K = 1;
+        #10 J = 0; K = 0;
+
+        // Test 5: Apply J = 1, K = 1 (Toggle Q)
+        #10 J = 1; K = 1;
+        #10 J = 0; K = 0;
+
+        // Additional tests for toggle functionality and set/reset conditions
+        #10 J = 1; K = 1; // Toggle again
+        #10 J = 1; K = 0; // Set Q
+        #10 J = 0; K = 1; // Reset Q
+        #10 J = 0; K = 0; // No change
+
+        // Finish simulation
+        #10 $finish;
+    end
+
+    // Monitor the signals
+    initial begin
+        $monitor("Time: %0t | Reset: %b | Set: %b | J: %b | K: %b | Q: %b", 
+                  $time, reset, set, J, K, Q);
+    end
+
+endmodule
+
+//OUTPUT AT CONSOLE//
+Time: 0   | Reset: 0 | Set: 0 | J: 0 | K: 0 | Q: 0
+Time: 10  | Reset: 1 | Set: 0 | J: 0 | K: 0 | Q: 0   // Q reset to 0
+Time: 20  | Reset: 0 | Set: 0 | J: 0 | K: 0 | Q: 0   // reset deactivated
+Time: 30  | Reset: 0 | Set: 1 | J: 0 | K: 0 | Q: 1   // Q set to 1
+Time: 40  | Reset: 0 | Set: 0 | J: 0 | K: 0 | Q: 1   // set deactivated
+Time: 50  | Reset: 0 | Set: 0 | J: 1 | K: 0 | Q: 1   // J=1, K=0, Q remains 1
+Time: 60  | Reset: 0 | Set: 0 | J: 0 | K: 0 | Q: 1   // No change
+Time: 70  | Reset: 0 | Set: 0 | J: 0 | K: 1 | Q: 0   // J=0, K=1, Q reset to 0
+Time: 80  | Reset: 0 | Set: 0 | J: 0 | K: 0 | Q: 0   // No change
+Time: 90  | Reset: 0 | Set: 0 | J: 1 | K: 1 | Q: 1   // J=1, K=1, Q toggles to 1
+Time: 100 | Reset: 0 | Set: 0 | J: 0 | K: 0 | Q: 1   // No change
+Time: 110 | Reset: 0 | Set: 0 | J: 1 | K: 1 | Q: 0   // J=1, K=1, Q toggles to 0
+Time: 120 | Reset: 0 | Set: 0 | J: 1 | K: 0 | Q: 1   // J=1, K=0, Q set to 1
+Time: 130 | Reset: 0 | Set: 0 | J: 0 | K: 1 | Q: 0   // J=0, K=1, Q reset to 0
+Time: 140 | Reset: 0 | Set: 0 | J: 0 | K: 0 | Q: 0   // No change
+
