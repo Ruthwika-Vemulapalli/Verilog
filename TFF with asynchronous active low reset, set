@@ -1,0 +1,117 @@
+//DESIGN MODULE//
+`timescale 1ns / 1ps
+
+module T_FF_async (
+    input clk,
+    input T,
+    input reset_n, // Active-low reset
+    input set_n,   // Active-low set
+    output reg Q
+);
+    always @(posedge clk or negedge reset_n or negedge set_n) begin
+        if (!reset_n) // Asynchronous active-low reset
+            Q <= 0;
+        else if (!set_n) // Asynchronous active-low set
+            Q <= 1;
+        else if (T) // Toggle condition
+            Q <= ~Q;
+    end
+endmodule
+//TESTBENCH//
+`timescale 1ns / 1ps
+
+module tb_T_FF_async;
+    // Declare inputs as reg and output as wire
+    reg clk;
+    reg T;
+    reg reset_n;
+    reg set_n;
+    wire Q;
+
+    // Instantiate the T Flip-Flop
+    T_FF_async uut (
+        .clk(clk),
+        .T(T),
+        .reset_n(reset_n),
+        .set_n(set_n),
+        .Q(Q)
+    );
+
+    // Generate clock signal
+    initial begin
+        clk = 0;
+        forever #5 clk = ~clk; // 10 ns clock period
+    end
+
+    // Stimulus block
+    initial begin
+        // Open VCD file for waveform output
+        $dumpfile("T_FF_async.vcd");
+        $dumpvars(0, tb_T_FF_async);
+
+        // Monitor changes in signals
+        $monitor("Time = %0t | clk = %b | T = %b | reset_n = %b | set_n = %b | Q = %b", 
+                 $time, clk, T, reset_n, set_n, Q);
+
+        // Initialize inputs
+        reset_n = 1;
+        set_n = 1;
+        T = 0;
+
+        // Apply test vectors
+        #10; // Wait for 10 ns
+        reset_n = 0; // Activate reset
+        #10; // Wait for 10 ns
+        reset_n = 1; // Deactivate reset
+
+        // Test case 1: Set condition
+        #10;
+        set_n = 0; // Activate set
+        #10; // Wait for 10 ns
+        set_n = 1; // Deactivate set
+
+        // Test case 2: Toggle operation
+        #10;
+        T = 1; // Set T high
+        #10; // Wait for clock edge
+        T = 0; // Set T low
+        #10; // Wait for clock edge
+        T = 1; // Set T high
+        #10; // Wait for clock edge
+
+        // Test case 3: Asynchronous Reset
+        #10;
+        reset_n = 0; // Activate reset
+        #10; // Wait for 10 ns
+        reset_n = 1; // Deactivate reset
+
+        // End simulation
+        #20;
+        $finish;
+    end
+endmodule
+//O/P AT CONSOLE//
+Time = 0 | clk = 0 | T = 0 | reset_n = 1 | set_n = 1 | Q = x
+Time = 5000 | clk = 1 | T = 0 | reset_n = 1 | set_n = 1 | Q = x
+Time = 10000 | clk = 0 | T = 0 | reset_n = 0 | set_n = 1 | Q = 0
+Time = 15000 | clk = 1 | T = 0 | reset_n = 0 | set_n = 1 | Q = 0
+Time = 20000 | clk = 0 | T = 0 | reset_n = 1 | set_n = 1 | Q = 0
+Time = 25000 | clk = 1 | T = 0 | reset_n = 1 | set_n = 1 | Q = 0
+Time = 30000 | clk = 0 | T = 0 | reset_n = 1 | set_n = 0 | Q = 1
+Time = 35000 | clk = 1 | T = 0 | reset_n = 1 | set_n = 0 | Q = 1
+Time = 40000 | clk = 0 | T = 0 | reset_n = 1 | set_n = 1 | Q = 1
+Time = 45000 | clk = 1 | T = 0 | reset_n = 1 | set_n = 1 | Q = 1
+Time = 50000 | clk = 0 | T = 1 | reset_n = 1 | set_n = 1 | Q = 1
+Time = 55000 | clk = 1 | T = 1 | reset_n = 1 | set_n = 1 | Q = 0
+Time = 60000 | clk = 0 | T = 0 | reset_n = 1 | set_n = 1 | Q = 0
+Time = 65000 | clk = 1 | T = 0 | reset_n = 1 | set_n = 1 | Q = 0
+Time = 70000 | clk = 0 | T = 1 | reset_n = 1 | set_n = 1 | Q = 0
+Time = 75000 | clk = 1 | T = 1 | reset_n = 1 | set_n = 1 | Q = 1
+Time = 80000 | clk = 0 | T = 1 | reset_n = 1 | set_n = 1 | Q = 1
+Time = 85000 | clk = 1 | T = 1 | reset_n = 1 | set_n = 1 | Q = 0
+Time = 90000 | clk = 0 | T = 1 | reset_n = 0 | set_n = 1 | Q = 0
+Time = 95000 | clk = 1 | T = 1 | reset_n = 0 | set_n = 1 | Q = 0
+Time = 100000 | clk = 0 | T = 1 | reset_n = 1 | set_n = 1 | Q = 0
+Time = 105000 | clk = 1 | T = 1 | reset_n = 1 | set_n = 1 | Q = 1
+Time = 110000 | clk = 0 | T = 1 | reset_n = 1 | set_n = 1 | Q = 1
+Time = 115000 | clk = 1 | T = 1 | reset_n = 1 | set_n = 1 | Q = 0
