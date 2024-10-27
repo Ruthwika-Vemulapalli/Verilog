@@ -1,0 +1,129 @@
+//DESIGN MODULE//
+module ModNCout(
+    input wire clk,
+    input wire rst,
+    input wire [1:0] ctrl,  // Control signals
+    input wire [3:0] load, // Load value for parallel loading
+    output reg [3:0] cout // 4-bit counter output
+);
+    parameter N = 6; // Modulo value (0 to N-1)
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            cout <= 0; // Reset the counter
+        end else begin
+            cout <= cout + (ctrl[0] - ctrl[1]); // Up count if ctrl = 01, down count if ctrl = 10
+            if (ctrl == 2'b11) begin
+                cout <= load; // Parallel load
+            end
+
+            // Modulo N operation
+            if (cout >= N) begin
+                cout <= 0; // Reset count if it exceeds N-1
+            end else if (cout < 0) begin
+                cout <= N - 1; // Wrap around for down counting
+            end
+        end
+    end
+endmodule
+
+//TESTBENCH//
+
+module tb_ModNCout;
+    reg clk;
+    reg rst;
+    reg [1:0] ctrl;
+    reg [3:0] load;
+    wire [3:0] cout;
+
+    // Instantiate the counter
+     ModNCout #(.N(6)) uut (
+        .clk(clk),
+        .rst(rst),
+        .ctrl(ctrl),
+        .load(load),
+        .cout(cout)
+    );
+
+    // Clock generation
+    initial begin
+        clk = 0;
+        forever #5 clk = ~clk; // 10 time units clock period
+    end
+
+    // Test sequence
+    initial begin
+        // VCD dump for waveform analysis
+        $dumpfile("dump.vcd"); // Specify the VCD file name
+        $dumpvars(0, uut);      // Dump all variables of the uut (Unit Under Test)
+
+        // Initialize
+        rst = 1; 
+        ctrl = 2'b00; 
+        load= 4'b0000; 
+        #10 rst = 0; // Release reset
+
+        // Up count
+        ctrl = 2'b01; #50; // Count up
+        $display("After Up Count: Count = %b", cout);
+
+        // Down count
+        ctrl = 2'b10; #50; // Count down
+        $display("After Down Count: Count = %b", cout);
+
+        // Parallel load
+        load = 4'b0110; 
+        ctrl = 2'b11; #10; // Load value 6
+        $display("After Parallel Load: Count = %b", cout);
+
+        // Test No Change
+        ctrl = 2'b00; #20; // No change
+        $display("After No Change: Count = %b", cout);
+
+        // Test Default Case
+        ctrl = 2'bxx; #10; // Invalid control signal
+        $display("After Invalid Control Signal: Count = %b", cout);
+
+        // Another Invalid Control Signal
+        ctrl = 2'b10; #50; // Count down
+        $display("After Down Count with Valid Ctrl: Count = %b", cout);
+
+        // Final state and cleanup
+        $finish;
+    end
+
+    // Monitor output
+    initial begin
+        $monitor("Time: %0t | Count: %b | Ctrl: %b | Load Value: %b", $time, cout, ctrl, load);
+    end
+endmodule
+
+//OUTPUT AT CONSOLE//
+Time: 0 | Count: 0000 | Ctrl: 00 | Load Value: 0000
+Time: 10 | Count: 0000 | Ctrl: 01 | Load Value: 0000
+Time: 15 | Count: 0001 | Ctrl: 01 | Load Value: 0000
+Time: 25 | Count: 0010 | Ctrl: 01 | Load Value: 0000
+Time: 35 | Count: 0011 | Ctrl: 01 | Load Value: 0000
+Time: 45 | Count: 0100 | Ctrl: 01 | Load Value: 0000
+Time: 55 | Count: 0101 | Ctrl: 01 | Load Value: 0000
+After Up Count: Count = 0101
+Time: 60 | Count: 0101 | Ctrl: 10 | Load Value: 0000
+Time: 65 | Count: 0100 | Ctrl: 10 | Load Value: 0000
+Time: 75 | Count: 0011 | Ctrl: 10 | Load Value: 0000
+Time: 85 | Count: 0010 | Ctrl: 10 | Load Value: 0000
+Time: 95 | Count: 0001 | Ctrl: 10 | Load Value: 0000
+Time: 105 | Count: 0000 | Ctrl: 10 | Load Value: 0000
+After Down Count: Count = 0000
+Time: 110 | Count: 0000 | Ctrl: 11 | Load Value: 0110
+Time: 115 | Count: 0110 | Ctrl: 11 | Load Value: 0110
+After Parallel Load: Count = 0110
+Time: 120 | Count: 0110 | Ctrl: 00 | Load Value: 0110
+Time: 125 | Count: 0000 | Ctrl: 00 | Load Value: 0110
+After No Change: Count = 0000
+Time: 140 | Count: 0000 | Ctrl: xx | Load Value: 0110
+Time: 145 | Count: xxxx | Ctrl: xx | Load Value: 0110
+After Invalid Control Signal: Count = xxxx
+Time: 150 | Count: xxxx | Ctrl: 10 | Load Value: 0110
+After Down Count with Valid Ctrl: Count = xxxx
+//WAVEFORMS//
+
