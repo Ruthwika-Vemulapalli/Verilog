@@ -1,0 +1,107 @@
+//DESIGN MODULE//
+`timescale 1ns / 1ps
+module D_FF_async (
+    input clk,
+    input D,
+    input reset,
+    input set,
+    output reg Q
+);
+    always @(posedge clk or posedge reset or posedge set) begin
+        if (reset)
+            Q <= 0;      // Asynchronous reset
+        else if (set)
+            Q <= 1;      // Asynchronous set
+        else
+            Q <= D;      // Normal D flip-flop operation
+    end
+endmodule
+//TESTBENCH//
+`timescale 1ns / 1ps
+module tb_D_FF_async;
+    // Declare inputs as reg and output as wire
+    reg clk;
+    reg D;
+    reg reset;
+    reg set;
+    wire Q;
+
+    // Instantiate the D Flip-Flop
+    D_FF_async uut (
+        .clk(clk),
+        .D(D),
+        .reset(reset),
+        .set(set),
+        .Q(Q)
+    );
+
+    // Generate clock signal
+    initial begin
+        clk = 0;
+        forever #5 clk = ~clk; // 10 ns clock period
+    end
+
+    // Stimulus block
+    initial begin
+        // Open VCD file for waveform output
+        $dumpfile("D_FF_async.vcd");
+        $dumpvars(0, tb_D_FF_async);
+
+        // Initialize inputs
+        reset = 0;
+        set = 0;
+        D = 0;
+
+        // Apply test vectors
+        #10; // Wait for 10 ns
+        reset = 1; // Activate reset
+        #10; // Wait for 10 ns
+        reset = 0; // Deactivate reset
+
+        // Test case 1: Set condition
+        #10;
+        set = 1; // Activate set
+        #10; // Wait for 10 ns
+        set = 0; // Deactivate set
+
+        // Test case 2: Normal operation
+        #10;
+        D = 1; // Set D high
+        #10; // Wait for clock edge
+        D = 0; // Set D low
+        #10; // Wait for clock edge
+
+        // Test case 3: Asynchronous Reset
+        #10;
+        reset = 1; // Activate reset
+        #10; // Wait for 10 ns
+        reset = 0; // Deactivate reset
+
+        // End simulation
+        #20;
+        $finish;
+    end
+endmodule
+//OUTPUT AT CONSOLE
+Time = 0 | clk = 0 | D = 0 | reset = 0 | set = 0 | Q = x
+Time = 5000 | clk = 1 | D = 0 | reset = 0 | set = 0 | Q = 0
+Time = 10000 | clk = 0 | D = 0 | reset = 1 | set = 0 | Q = 0
+Time = 15000 | clk = 1 | D = 0 | reset = 1 | set = 0 | Q = 0
+Time = 20000 | clk = 0 | D = 0 | reset = 0 | set = 0 | Q = 0
+Time = 25000 | clk = 1 | D = 0 | reset = 0 | set = 0 | Q = 0
+Time = 30000 | clk = 0 | D = 0 | reset = 0 | set = 1 | Q = 1
+Time = 35000 | clk = 1 | D = 0 | reset = 0 | set = 1 | Q = 1
+Time = 40000 | clk = 0 | D = 0 | reset = 0 | set = 0 | Q = 1
+Time = 45000 | clk = 1 | D = 0 | reset = 0 | set = 0 | Q = 0
+Time = 50000 | clk = 0 | D = 1 | reset = 0 | set = 0 | Q = 0
+Time = 55000 | clk = 1 | D = 1 | reset = 0 | set = 0 | Q = 1
+Time = 60000 | clk = 0 | D = 0 | reset = 0 | set = 0 | Q = 1
+Time = 65000 | clk = 1 | D = 0 | reset = 0 | set = 0 | Q = 0
+Time = 70000 | clk = 0 | D = 0 | reset = 0 | set = 0 | Q = 0
+Time = 75000 | clk = 1 | D = 0 | reset = 0 | set = 0 | Q = 0
+Time = 80000 | clk = 0 | D = 0 | reset = 1 | set = 0 | Q = 0
+Time = 85000 | clk = 1 | D = 0 | reset = 1 | set = 0 | Q = 0
+Time = 90000 | clk = 0 | D = 0 | reset = 0 | set = 0 | Q = 0
+Time = 95000 | clk = 1 | D = 0 | reset = 0 | set = 0 | Q = 0
+Time = 100000 | clk = 0 | D = 0 | reset = 0 | set = 0 | Q = 0
+Time = 105000 | clk = 1 | D = 0 | reset = 0 | set = 0 | Q = 0
